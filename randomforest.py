@@ -4,21 +4,22 @@ from itertools import repeat
 from utils import *
 
 class random_forest_regressor:
-    def __init__(self,m=20):
+    def __init__(self,m=10):
         self.m = m
         self.trees = []
 
     def train(self,X,y):
-        k = int(np.ceil(np.sqrt(X.shape[1])))
+        k = X.shape[1] // 3
+
         #select random samples for bagging
         samples = [np.random.choice(X.shape[0],X.shape[0]) for _ in range(self.m)]
         #select random subspace
         args = [(X[sample],y[sample],k) for sample in samples]
         pool = Pool(processes=4)
-        self.trees = list(pool.starmap(build_tree, args))
+        self.trees = list(pool.starmap(_build_tree, args))
         #self.trees = list(map(build_tree,args))
 
-    def predict(self,X):
+    def fit(self,X):
         prediction = np.zeros(X.shape[0])
         for idx,x in enumerate(X):
             for tree in self.trees:
@@ -32,20 +33,20 @@ class random_forest_regressor:
             prediction[idx] /= self.m
         return prediction
 
-def kfeatures(X,k):
+def _kfeatures(X,k):
     if k == None:
         return np.arange(X.shape[1],dtype=np.int)
     return np.sort(np.random.choice(X.shape[1],k,replace=False))
 
-def build_tree(X, y, k = None, minsplit = 2, converge = 1e-6, mse = np.inf,  max_depth = np.inf):
+def _build_tree(X, y, k = None, minsplit = 2, converge = 1e-6, mse = np.inf,  max_depth = np.inf):
     if max_depth == 0 or y.size <= minsplit:
         if y.size == 0:
             print("oh no")
         return np.mean(y),
 
     X = ensure2D(X)
-    subspace = kfeatures(X,k)
-    feature,split,new_mse = findsplit(X[:,subspace],y)
+    subspace = _kfeatures(X,k)
+    feature,split,new_mse = _findsplit(X[:,subspace],y)
 
     if split is None or  mse - new_mse < converge:# No splits could be made
         return np.mean(y),
@@ -58,11 +59,11 @@ def build_tree(X, y, k = None, minsplit = 2, converge = 1e-6, mse = np.inf,  max
         return np.mean(y),
 
     args = (k, minsplit, converge, new_mse,  max_depth - 1)
-    left = build_tree(X[mask], lefty, *args)
-    right = build_tree(X[~mask], righty, *args)
+    left = _build_tree(X[mask], lefty, *args)
+    right = _build_tree(X[~mask], righty, *args)
     return (feature, split,left,right)
 
-def findsplit(X,y):
+def _findsplit(X,y):
     x_order = np.argsort(X,axis=0)
     y_n = np.arange(1,X.shape[0]+1,dtype=np.int).reshape(-1,1)
     y_l = np.empty(x_order.shape,dtype=y.dtype)
@@ -99,7 +100,7 @@ def findsplit(X,y):
     return best_feature, best_split, best_mse
 
 
-def findsplit_cummulative(X,y):
+def _findsplit_cummulative(X,y):
     x_order = np.argsort(X,axis=0)
     y_n = np.arange(1,X.shape[0]+1,dtype=np.int).reshape(-1,1)
     y_l = np.empty(x_order.shape,dtype=y.dtype)

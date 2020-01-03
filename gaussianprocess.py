@@ -4,7 +4,6 @@ import scipy as sp
 from sklearn.gaussian_process import GaussianProcessRegressor
 from timeit import timeit
 from numpy.linalg import cholesky
-from scipy.linalg import cho_factor,cho_solve,solve_triangular,solve
 from utils import *
 
 
@@ -13,34 +12,25 @@ class gaussian_process_regressor:
     def __init__(self):
         pass
 
-    def assign(self,X,y,T):
-        self.T = T
+
+    def train(self,X,y):
+        #TODO: prior is mean of training set or normalise to 0???
         self.X = X
         self.y = y
+        self.K = rbf(X,X) # + sig_noise * np.identity(y.size)
+        self.L = np.linalg.cholesky(K)
+        self.L_inv = np.linalg.inv(self.L)
+        self.a = self.L_inv.T.dot(self.L_inv.dot(y))
 
-    def train(self,X,y,T):
-        #TODO: prior is mean of training set or normalise to 0???
-        self.assign(X,y,T)
-        var_y = np.var(y)
-
-        K = rbf(X, X)# + var_y * np.identity(y.size)
+    def fit(self,T):
         Kx = rbf(X, T)
         Kxx = rbf(T, T)
-        inv = np.linalg.inv(K)
-        self.mu = Kx.T.dot(inv).dot(y)
-        self.cov = Kxx - Kx.T.dot(inv).dot(Kx)
-        return self.mu
-
-    def alg2(self,X,y,T):
-        self.assign(X,y,T)
-        K = rbf(X,X)
-        Kx = rbf(X, T)
-        L = np.linalg.cholesky(K)
-        L_inv = np.linalg.inv(L)
-        a = L_inv.T.dot(L_inv.dot(y))
-        self.mu = Kx.T.dot(a)
-        v = L_inv.dot(Kx)
-        self.cov = rbf(T,T) - v.T.dot(v)
+        #inv = np.linalg.inv(K)
+        #self.mu = Kx.T.dot(inv).dot(y)
+        #self.cov = Kxx - Kx.T.dot(inv).dot(Kx)
+        self.mu = Kx.T.dot(self.a)
+        v = self.L_inv.dot(Kx)
+        self.cov = Kxx - v.T.dot(v)
         return self.mu
 
     def skgp(X,y,T):
@@ -79,6 +69,4 @@ if __name__ == "__main__":
     #time = timeit(lambda :gaussian.alg2(x_train,y_train,x_test),number=5000)
     print("done",time)
     gaussian.plot()
-
-
 
