@@ -1,14 +1,10 @@
-import itertools
 import matplotlib.pyplot as plt
 
 import numpy as np
 import scipy as sp
 import time
-from scipy.spatial import cKDTree
-from sklearn import neighbors,linear_model
 
-from randomforest import *
-from gaussianprocess import *
+from regression import *
 from utils import *
 
 def toy_dataset(size=100):
@@ -40,34 +36,6 @@ def visualise(x_test,y_test,y_pred):
     plt.scatter(x_test, y_pred, color='navy', label='prediction', s=1)
     plt.show()
 
-def nearest_neighbour(X,y,T,k=5):
-    #brute force solution
-    #def knn_func(xpred,k):
-    #    distances = np.sum((X-xpred)**2,axis=1)
-    #    indices = np.argsort(distances)[:k]
-    #    return np.mean(y[indices])
-    #knn_vect = np.vectorize(knn_func)
-    #return  = knn_vect(T,k).ravel()
-
-    #kdtree
-    kdtree = cKDTree(X)
-    neighbours = kdtree.query(T,k=k)[1]
-    if k == 1:
-        return y.take(neighbours)
-    return np.mean(y.take(neighbours),axis=1)
-
-def linear_regression(X,y,T):
-    X_mean = np.mean(X,axis=0) #shift intercept
-    y_mean = np.mean(y)
-    X-=X_mean
-    y-=y_mean
-    t0 = time.time()
-    #b = np.linalg.inv(X.T.dot(X)).dot(X.T).dot(y)
-    #b = np.linalg.pinv(X).dot(y) #pseudo inverse
-    b = np.linalg.lstsq(X,y,rcond=None)[0]
-    e = y_mean - X_mean.dot(b) #y = bx+c
-    return T.dot(b) + e
-
 if __name__ == "__main__":
     dataset = load_dataset()
     #dataset = toy_dataset()
@@ -75,18 +43,14 @@ if __name__ == "__main__":
 
     t = time.time()
 
-    #y_pred = nearest_neighbour(x_train,y_train,x_test,k=4)
-    #from sklearn.neighbors import KNeighborsRegressor
-    #neigh = KNeighborsRegressor(n_neighbors=3)
-    #neigh.fit(x_train, y_train)
-    #y_pred = neigh.predict(x_test)
-    #y_pred = linear_regression(x_train, y_train, x_test)
-    forest = random_forest_regressor()
-    forest.train(x_train,y_train)
-    y_pred = forest.predict(x_test)
+    #regressor = knn_regressor()
+    #regressor = linear_regressor()
+    #regressor = gaussian_process_regressor()
+    regressor = random_forest_regressor()
+    regressor.train(x_train,y_train)
+    y_pred = regressor.predict(x_test)
 
     #samples = np.random.choice(x_train.shape[0],600,replace=False)
-    #gaussian = gaussian_process_regressor()
     #y_pred = gaussian.train(x_train,y_train,x_test)
     #gaussian.plot()
 

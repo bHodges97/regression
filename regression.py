@@ -14,7 +14,7 @@ class linear_regressor:
             self.solver = lambda X,y: np.linalg.pinv(X).dot(y)
         elif method == "inv":
             self.solver = lambda X,y: np.linalg.inv(X.T.dot(X)).dot(X.T).dot(y)
-        else:
+        elif method == "lstsq":
             self.solver = lambda X,y: np.linalg.lstsq(X,y,rcond=None)[0]
 
     def train(self, X, y):
@@ -31,8 +31,6 @@ class linear_regressor:
         return T.dot(b) + e
 
 class knn_regressor:
-    def __init__(self):
-        pass
 
     def train(self,X,y):
         self.tree = cKDTree(X)
@@ -58,8 +56,6 @@ class knn_regressor:
 
 
 class gaussian_process_regressor:
-    def __init__(self):
-        pass
 
     def train(self,X,y):
         #TODO: prior is mean of training set or normalise to 0???
@@ -110,7 +106,7 @@ class random_forest_regressor:
         self.trees = []
 
     def train(self,X,y):
-        k = X.shape[1] // 3
+        k = X.shape[1] // 2
 
         #select random samples for bagging
         samples = [np.random.choice(X.shape[0],X.shape[0]) for _ in range(self.m)]
