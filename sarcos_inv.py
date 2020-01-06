@@ -5,7 +5,12 @@ import scipy as sp
 import time
 
 from regression import *
+from randomforest import *
+from gaussian import *
+
 from utils import *
+
+from sklearn.ensemble import RandomForestRegressor
 
 def toy_dataset(size=100):
     np.random.seed(0)
@@ -37,17 +42,20 @@ def visualise(x_test,y_test,y_pred):
     plt.show()
 
 if __name__ == "__main__":
-    dataset = load_dataset()
-    #dataset = toy_dataset()
+    #dataset = load_dataset()
+    dataset = toy_dataset()
     x_train,y_train,x_test,y_test = dataset
-
+    print(x_train.shape)
     t = time.time()
 
+    #regressor = GaussianProcessRegressor()
+    #regressor = RandomForestRegressor()
+    #----
     #regressor = knn_regressor()
     #regressor = linear_regressor()
-    #regressor = gaussian_process_regressor()
-    regressor = random_forest_regressor()
-    regressor.train(x_train,y_train)
+    regressor = gaussian_process_regressor()
+    #regressor = random_forest_regressor()
+    regressor.fit(x_train,y_train)
     y_pred = regressor.predict(x_test)
 
     #samples = np.random.choice(x_train.shape[0],600,replace=False)
@@ -58,6 +66,6 @@ if __name__ == "__main__":
 
     print("time",time.time()-t)
     #y_pred = skgp(x_train,y_train,x_test)
-    print("MSE",mean_squared_error(y_pred,y_test),y_pred.shape)
+    print("MSE",mean_squared_error(y_pred,y_test))
     #print(np.abs(y_pred-y_test)[:10])
     visualise(x_test,y_test,y_pred)

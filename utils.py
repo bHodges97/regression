@@ -6,7 +6,7 @@ def ensure2D(X):
     return X
 
 def sumsquared(x):
-    if x.ndim == 1:#ensure 2d for toy problem
+    if x.ndim == 1:
         return np.inner(x,x)
     return np.einsum('ij,ij->i',x,x)
 
