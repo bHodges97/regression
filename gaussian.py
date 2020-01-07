@@ -11,22 +11,21 @@ class gaussian_process_regressor:
     def fit(self,X,y, noise=0.1):
         self.X = X
         self.y = y
-        if X.shape[0] > 100:
+        if X.shape[0] > 200:
+            print("truncating")
             size = int(X.shape[0] * 0.15)
             size = 200
             self.X = X[:size]
             self.y = y[:size]
 
-        size = int(X.shape[0] * 0.15)
         #TODO: prior is mean of training set or normalise to 0???
         self.noise = noise
         print("learning")
         t0 = time.time()
         self.params = self.optimize()
         print(time.time()-t0)
-        self.X = X[:size]
-        self.y = y[:size]
-        print("size",size)
+        #self.X = X[:size]
+        #self.y = y[:size]
 
         self.K = rbf(X,X, *self.params)  + noise * np.identity(y.size)
         self.L = cholesky(self.K)
@@ -34,6 +33,7 @@ class gaussian_process_regressor:
         self.a = self.L_inv.T.dot(self.L_inv.dot(y))
 
     def predict(self,T):
+        self.T = T
         X,y = self.X,self.y
         Kx = rbf(X, T, *self.params)
         Kxx = rbf(T, T, *self.params)
@@ -70,16 +70,16 @@ class gaussian_process_regressor:
 
         def log_marginal(params):
             d,l = params[0],params[1]
-            K = rbf_kernel(l,d) + noise
+            K = rbf_kernel(d,l) + noise
+            #0.5 * ln |K| - o,5 y.t * K^-1 * y - N/2 ln(2pi)
             return -0.5 * (-y.T.dot(inv(K)).dot(y) - np.log(det(K)) - n * np.log(2*np.pi))
 
         def grad_log(params):
             d,l = params[0],params[1]
             #l = np.exp(l)
             #d = np.exp(2*d)
-            nl =  norm / l**2
-            dkdl = d * np.exp(-nl/2).dot(nl)
-            dkdd = 2 * d * np.exp(-nl/2)
+            dkdl = - d * np.exp(-norm/2).dot(norm) / l**2
+            dkdd = np.exp(-norm/l)
 
             K = rbf_kernel(l,d) + noise
             invk = inv(K)
@@ -95,12 +95,12 @@ class gaussian_process_regressor:
             return o
 
         def init():
-            guess = np.array([0.5,0.1])
+            guess = np.array([1,0.01])
             bounds = [(1e5,None),(1e5,None)]
             #res = fmin_l_bfgs_b(log_marginal,guess,grad_log,bounds=bounds)[0]
-            res = sp.optimize.minimize(log_marginal,guess,method='L-BFGS-B',bounds=bounds)['x']
+            res = sp.optimize.minimize(log_marginal,guess,method='L-BFGS-B',bounds=bounds)#['x']
             print(res)
-            return res
+            return res['x']
 
         return list(init())
 

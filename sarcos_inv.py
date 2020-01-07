@@ -42,8 +42,8 @@ def visualise(x_test,y_test,y_pred):
     plt.show()
 
 if __name__ == "__main__":
-    dataset = load_dataset()
-    #dataset = toy_dataset()
+    #dataset = load_dataset()
+    dataset = toy_dataset()
 
     x_train,y_train,x_test,y_test = split_data(dataset)
     t = time.time()
@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
     #samples = np.random.choice(x_train.shape[0],600,replace=False)
     #y_pred = gaussian.train(x_train,y_train,x_test)
-    #gaussian.plot()
+    regressor.plot()
 
 
 
