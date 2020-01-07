@@ -3,7 +3,7 @@ from multiprocessing.pool import Pool
 from utils import *
 
 class random_forest_regressor:
-    def __init__(self,m=1,k=None):
+    def __init__(self,m=10,k=None):
         self.m = m
         self.trees = []
         self.k = k

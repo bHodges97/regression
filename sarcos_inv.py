@@ -12,24 +12,24 @@ from utils import *
 
 from sklearn.ensemble import RandomForestRegressor
 
-def toy_dataset(size=100):
+def toy_dataset(size=200):
     np.random.seed(0)
     noise = np.random.normal(0,0.2,(size,1))
     x = np.random.uniform(0, 5,(size,1))
     x = np.sort(x)
-    #y = np.sin(x)#.ravel()
-    y = (x * 1.5 ) + 5
+    y = np.sin(x)#.ravel()
+    #y = (x * 1.5 ) + 5
     #y += noise
     #y = 1/5*np.sin(x*np.pi*2*5) + 2*x
-    return split_data(np.hstack([x,y]))
+    return np.hstack([x,y])
 
 def load_dataset():
     data = np.genfromtxt('sarcos_inv.csv', delimiter=',')
     np.random.shuffle(data)
-    return split_data(data)
+    return data
 
-def split_data(data):
-    rows = data.shape[0] // 10 * 8
+def split_data(data, ratio = 0.8):
+    rows = int(data.shape[0] * ratio)
     x_train = data[:rows,:-1]
     y_train = data[:rows,-1].ravel()
     x_test = data[rows:,:-1]
@@ -42,10 +42,10 @@ def visualise(x_test,y_test,y_pred):
     plt.show()
 
 if __name__ == "__main__":
-    #dataset = load_dataset()
-    dataset = toy_dataset()
-    x_train,y_train,x_test,y_test = dataset
-    print(x_train.shape)
+    dataset = load_dataset()
+    #dataset = toy_dataset()
+
+    x_train,y_train,x_test,y_test = split_data(dataset)
     t = time.time()
 
     #regressor = GaussianProcessRegressor()
