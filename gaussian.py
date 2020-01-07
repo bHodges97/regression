@@ -8,13 +8,13 @@ from scipy.optimize import fmin_l_bfgs_b
 from utils import *
 
 class gaussian_process_regressor:
-    def fit(self,X,y, noise=20):
+    def fit(self,X,y, noise=1):
         self.X = X
         self.y = y
         if X.shape[0] > 200:
             print("truncating")
             size = int(X.shape[0] * 0.15)
-            size = 200
+            size = 1000
             self.X = X[:size]
             self.y = y[:size]
 
@@ -24,13 +24,14 @@ class gaussian_process_regressor:
         t0 = time.time()
         self.params = self.optimize()
         print("training time",time.time()-t0)
-        #self.params = [10000,10000]
-        self.X = X[500:4000]
-        self.y = y[500:4000]
+        self.X = X[:10000]
+        self.y = y[:10000]
 
         self.K = rbf(self.X,self.X, *self.params)  + noise * np.identity(self.y.size)
         self.L = cholesky(self.K)
         self.L_inv = inv(self.L)
+
+        #self.a = np.linalg.solve(self.L.T, np.linalg.solve(self.L,self.y))
         self.a = self.L_inv.T.dot(self.L_inv.dot(self.y))
 
     def predict(self,T):
@@ -43,6 +44,7 @@ class gaussian_process_regressor:
         #self.cov = Kxx - Kx.T.dot(inv).dot(Kx)
         self.mu = Kx.T.dot(self.a)
         v = self.L_inv.dot(Kx)
+        #v = np.linalg.solve(self.L,Kx)
         self.cov = Kxx - v.T.dot(v)
         return self.mu
 
@@ -98,7 +100,6 @@ class gaussian_process_regressor:
 
             o = -np.array([ddd,ddl])
 
-            print("x",o,d,l)
             return o
 
         def log_p2(params):
@@ -106,22 +107,20 @@ class gaussian_process_regressor:
             K = rbf_kernel(d,l) + noise
 
             L = np.linalg.cholesky(K)
+            #linv = inv(L)
+            
+            #beta = linv.T.dot(linv.dot(y))
             beta = np.linalg.solve(L.T, np.linalg.solve(L,y))
-            logp = - 0.5 * np.dot(y.T,beta) - np.sum(np.log(np.diag(L))) - \
-                0.5 * n * np.log(2*np.pi)
-            print(logp,d,l)
+            logp = 0.5 * (-np.dot(y.T,beta) - np.sum(np.log(np.diag(L))) -  n * np.log(2*np.pi))
             return -logp
 
         def init():
-            guess = np.array([150,1])
+            guess = np.array([102843,6500])
             bounds = [(1e-8,None),(1e-8,None)]
-            #res = fmin_l_bfgs_b(log_p2,guess,grad_log,bounds=bounds)
-            res = sp.optimize.minimize(log_p2,guess,method='L-BFGS-B',bounds=bounds)#
+            #res = fmin_l_bfgs_b(log_p,guess,grad_log,bounds=bounds)
+            res = fmin_l_bfgs_b(log_p2,guess,approx_grad=True,factr=1E1,bounds=bounds)
             print("best params",res)
-            if 'x' in res:
-                res= res['x']
-            else:
-                res = res[0]
+            res = res[0]
             return res[0],res[1]
 
         return init()
