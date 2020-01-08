@@ -8,7 +8,7 @@ from scipy.optimize import fmin_l_bfgs_b
 from utils import *
 
 class gaussian_process_regressor:
-    def fit(self,X,y, noise=1):
+    def fit(self,X,y, noise=0.01):
         self.X = X
         self.y = y
         if X.shape[0] > 200:
@@ -107,18 +107,17 @@ class gaussian_process_regressor:
             K = rbf_kernel(d,l) + noise
 
             L = np.linalg.cholesky(K)
-            #linv = inv(L)
-            
-            #beta = linv.T.dot(linv.dot(y))
-            beta = np.linalg.solve(L.T, np.linalg.solve(L,y))
+            linv = inv(L)
+            beta = linv.T.dot(linv.dot(y))
+            #beta = np.linalg.solve(L.T, np.linalg.solve(L,y))
             logp = 0.5 * (-np.dot(y.T,beta) - np.sum(np.log(np.diag(L))) -  n * np.log(2*np.pi))
             return -logp
 
         def init():
             guess = np.array([102843,6500])
             bounds = [(1e-8,None),(1e-8,None)]
-            #res = fmin_l_bfgs_b(log_p,guess,grad_log,bounds=bounds)
-            res = fmin_l_bfgs_b(log_p2,guess,approx_grad=True,factr=1E1,bounds=bounds)
+            res = fmin_l_bfgs_b(log_p2,guess,grad_log,bounds=bounds)
+            #res = fmin_l_bfgs_b(log_p2,guess,approx_grad=True,factr=1E1,bounds=bounds)
             print("best params",res)
             res = res[0]
             return res[0],res[1]
